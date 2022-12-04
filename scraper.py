@@ -9,14 +9,16 @@ class TwitterScraper:
     def __init__(self, username, password, tag):
         self.analyzer = SentimentIntensityAnalyzer()
         self.driver = webdriver.Edge()
+        self.qr_driver = webdriver.Edge()
         self.visited_tweets = set()
         self.username = username
         self.password = password
         self.tag = tag
 
     def __exit__(self):
-        # pass
+        # pass, may have to add logic here to keep driver open
         self.driver.close()
+        self.qr_driver.close()
 
     def login_to_twitter(self, username, password):
         self.driver.get("https://twitter.com/i/flow/login")
@@ -35,7 +37,6 @@ class TwitterScraper:
     # Noticed that on average each scroll uncovered 10 new tweets, increase num_scroll to get to desired number of tweets
     def extract_tweet_data(self, num_scroll=2, num_tweets=10):
         data = []
-        # iterate num_scroll times
         for i in range(0, num_scroll):
             tweets = self.driver.find_elements(By.CSS_SELECTOR, "article[data-testid='tweet']")
             trailing_tweets_num = min(num_tweets, len(tweets))
@@ -52,9 +53,8 @@ class TwitterScraper:
                     tweet_like = tweet.find_element(By.CSS_SELECTOR, "div[data-testid='like']").text or "0"
                     tweet_sentiment_score = self.analyzer.polarity_scores(tweet_text)["compound"]
                     tweet_sentiment = "pos" if tweet_sentiment_score > 0.05 else ("neg" if tweet_sentiment_score < -0.05 else "neu")
-                    # tweet_url = tweet.find_elements(By.CSS_SELECTOR, "a[role='link']")[3].get_attribute("href")
-                    # tweet_quote_retweet = self.extract_tweet_quote_retweets(tweet_url)
-                    tweet_quote_retweet = "N/A"
+                    tweet_url = tweet.find_elements(By.CSS_SELECTOR, "a[role='link']")[3].get_attribute("href")
+                    tweet_quote_retweet = self.extract_tweet_quote_retweets(tweet_url)
                     data.append((tweet_text, tweet_reply, tweet_retweet, tweet_like, tweet_quote_retweet, tweet_sentiment_score, tweet_sentiment))
                     # print(tweet_text, tweet_reply, tweet_retweet, tweet_like, tweet_quote_retweet, tweet_sentiment_score, tweet_sentiment)
                 except Exception as e:
@@ -63,19 +63,22 @@ class TwitterScraper:
                 self.scroll_down()
         return data
 
+    # Uses a second (unauthenticated) driver to visit the tweet page and extract the quote retweets
     def extract_tweet_quote_retweets(self, tweet_url):
-        # Creates a new (unauthenticated) driver to visit the tweet page and extract the quote retweets
-        qr_driver=webdriver.Edge()
-        qr_driver.get(tweet_url)
-        time.sleep(15)
-        tweet=qr_driver.find_element(By.CSS_SELECTOR, "article[data-testid='tweet']")
-        tweet_quote_retweets=tweet.find_elements(By.CSS_SELECTOR, "span[data-testid='app-text-transition-container']")[1].text or "0"
+        tweet_quote_retweets = "N/A"
+        try:
+          self.qr_driver.get(tweet_url)
+          time.sleep(10)
+          tweet = self.qr_driver.find_element(By.CSS_SELECTOR, "article[data-testid='tweet']")
+          tweet_quote_retweets=tweet.find_elements(By.CSS_SELECTOR, "span[data-testid='app-text-transition-container']")[1].text or "0"
+        except Exception as e:
+          pass
         return tweet_quote_retweets
 
     def visit_trending_topics(self):
         # Go to each trending topic page and extract the tweets
         data = dict()
-        for i in range(0, 5):
+        for i in range(0, 1):
             trending_widget=self.driver.find_element(By.CSS_SELECTOR, "div[aria-label='Timeline: Trending now']")
             topic=trending_widget.find_elements(By.CSS_SELECTOR, "div[role='link']")[i]
             topic_name = topic.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")[2].text
@@ -126,7 +129,7 @@ class TwitterScraper:
 if __name__ == '__main__':
     scraper = TwitterScraper("@Memes2117", "Test1234", "Test")
     scraper.run_scrape_homefeed()
-    # print(scraper.run_scrape_trending())
+    # scraper.run_scrape_trending()
     
 
 
