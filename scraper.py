@@ -34,8 +34,8 @@ class TwitterScraper:
         login_button.click()
         time.sleep(10)
 
-    # Noticed that on average each scroll uncovered 10 new tweets, increase num_scroll to get to desired number of tweets
-    def extract_tweet_data(self, num_scroll=2, num_tweets=10):
+    # Noticed that on average each scroll uncovered ~7 new tweets, increase num_scroll to get to desired number of tweets
+    def extract_tweet_data(self, num_scroll=3, num_tweets=10):
         data = []
         for i in range(0, num_scroll):
             tweets = self.driver.find_elements(By.CSS_SELECTOR, "article[data-testid='tweet']")
@@ -78,16 +78,19 @@ class TwitterScraper:
     def visit_trending_topics(self):
         # Go to each trending topic page and extract the tweets
         data = dict()
-        for i in range(0, 1):
-            trending_widget=self.driver.find_element(By.CSS_SELECTOR, "div[aria-label='Timeline: Trending now']")
-            topic=trending_widget.find_elements(By.CSS_SELECTOR, "div[role='link']")[i]
-            topic_name = topic.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")[2].text
-            topic.click()
-            time.sleep(3)
-            tweet_data = self.extract_tweet_data()
-            data[topic_name] = tweet_data
-            self.driver.back()
-            time.sleep(2)
+        for i in range(0, 5):
+            try:
+              trending_widget=self.driver.find_element(By.CSS_SELECTOR, "div[aria-label='Timeline: Trending now']")
+              topic=trending_widget.find_elements(By.CSS_SELECTOR, "div[role='link']")[i]
+              topic_name = topic.find_element(By.TAG_NAME, "div").find_elements(By.TAG_NAME, "div")[2].text
+              topic.click()
+              time.sleep(3)
+              tweet_data = self.extract_tweet_data()
+              data[topic_name] = tweet_data
+              self.driver.back()
+              time.sleep(5)
+            except:
+              pass
         return data
     
     def scroll_down(self):
@@ -127,9 +130,20 @@ class TwitterScraper:
         return data
 
 if __name__ == '__main__':
-    scraper = TwitterScraper("@Memes2117", "Test1234", "Test")
-    scraper.run_scrape_homefeed()
+    scraper = TwitterScraper("<Username>", "<Password>", "<Tag>")
+    # scraper.run_scrape_homefeed()
     # scraper.run_scrape_trending()
+    
+    
+    
+    
+    # scraper = TwitterScraper("@Memes2117", "Test1234", "Celeb")
+    # scraper = TwitterScraper("@wari0930", "disneyplus", "Tech")
+    # scraper = TwitterScraper("@PafaZobunews", "disneyplus", "News")
+    # scraper.run_scrape_trending()
+    
+    
+    
     
 
 
