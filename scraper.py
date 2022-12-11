@@ -130,16 +130,8 @@ class TwitterScraper:
         return data
 
 if __name__ == '__main__':
-    scraper = TwitterScraper("<Username>", "<Password>", "<Tag>")
+    # scraper = TwitterScraper("<Username>", "<Password>", "<Tag>")
     # scraper.run_scrape_homefeed()
-    # scraper.run_scrape_trending()
-    
-    
-    
-    
-    # scraper = TwitterScraper("@Memes2117", "Test1234", "Celeb")
-    # scraper = TwitterScraper("@wari0930", "disneyplus", "Tech")
-    # scraper = TwitterScraper("@PafaZobunews", "disneyplus", "News")
     # scraper.run_scrape_trending()
     
     
